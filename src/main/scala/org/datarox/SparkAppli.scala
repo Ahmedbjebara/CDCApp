@@ -20,6 +20,7 @@ object SparkAppli {
       System.exit(1)
     }
 
+
     val argfile= args(0)
     val  arrayString = Source.fromFile(argfile).mkString.split("\n")
 
