@@ -7,9 +7,11 @@ import org.datarox.SharedSparkSession
 
 case class User(Id: Int, Prenom: String, Date: String)
 
+case class Person(Action: String, Id: Int, Prenom: String, Date: String)
+
 case class customers(ID: Int, PRENOM: String, DATE: String)
 
-class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen with SharedSparkSession {
+class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen {
 
   implicit val spark: SparkSession = SparkSession
     .builder()
@@ -24,41 +26,34 @@ class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen with Share
   import spark.implicits._
 
 
-
-  val simpleDF: DataFrame = Seq(User(1, "JACER", "13/11/2019"),
-    User(2, "AHMED", "14/11/2019"),
-    User(3, "NIDHAL", "15/11/2019"))
-    .toDF("ID", "PRENOM", "DATE")
+  val simpleDF: DataFrame = Seq(Person("I", 1, "JACER", "13/11/2019"),
+    Person("D", 2, "AHMED", "14/11/2019"),
+    Person("U", 3, "NIDHAL", "15/11/2019"))
+    .toDF("ACTION", "ID", "PRENOM", "DATE")
 
   it should "read records from csv file into dataframe" in {
     Given("an absolute path of a csv file")
-    val filePath = "C:\\Users\\dell\\Desktop\\aa\\changements.csv"
+    val filePath = "C:\\Users\\dell\\Desktop\\aa\\testRead.csv"
     When("readfunct is invoked")
-    val resultatDF = readfunct(filePath)
+    val resultatDF = readDFFromFile(filePath)
     Then(" dataframe should be returned ")
     resultatDF.collect() should contain theSameElementsAs simpleDF.collect()
 
   }
 
 
-  spark.sql("DROP TABLE CDCFINAL")
-
-  spark.sql(" CREATE TABLE IF NOT EXISTS CDCFINAL(  ID INT , PRENOM STRING , DATE STRING)  row format delimited fields terminated by ';'")
-
-  spark.sql(" INSERT INTO CDCFINAL  VALUES (1, 'JACER', '13/11/2019')")
-  spark.sql(" INSERT INTO CDCFINAL  VALUES (2, 'AHMED', '14/11/2019')")
-  spark.sql(" INSERT INTO CDCFINAL  VALUES (3, 'NIDHAL', '15/11/2019')")
-  //spark.sql(" INSERT INTO CDCFINAL  VALUES (1, 'JACER', '13/11/2019')")
-  val dfTest = spark.sql("SELECT * FROM CDCFINAL")
-
-
-  spark.sql("DROP TABLE CDC")
-  spark.sql(" CREATE TABLE IF NOT EXISTS CDC(  ID INT , PRENOM STRING , DATE STRING)  row format delimited fields terminated by ';'")
+  val dfTest = Seq(customers(1, "JACER", "13/11/2019"),
+    customers(2, "AHMED", "14/11/2019"),
+    customers(3, "NIDHAL", "15/11/2019"),
+    customers(4, "MEHDI", "16/11/2019"),
+    customers(5, "ACHREF", "17/11/2019"),
+    customers(6, "MED", "18/11/2019"))
+    .toDF("ID", "PRENOM", "DATE")
 
 
   it should "insert records from dataframe into dataframe" in {
 
-    Given("a dataframe ")
+    Given("two dataframes , one from external file and the other from HIVE Table ")
 
     import spark.implicits._
 
@@ -67,38 +62,46 @@ class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen with Share
       customers(3, "NIDHAL", "15/11/2019"))
       .toDF("ID", "PRENOM", "DATE")
 
+    val cdcDF = Seq(customers(4, "MEHDI", "16/11/2019"),
+      customers(5, "ACHREF", "17/11/2019"),
+      customers(6, "MED", "18/11/2019"))
+      .toDF("ID", "PRENOM", "DATE")
+
     // val fileToDF =  Seq(customers(1, "JACER", "13/11/2019")).toDF("ID", "PRENOM", "DATE")
 
     When("Insertfunct is invoked")
-    val finalDF = Insertfunct(fileToDF)
+    val finalDF = insert(fileToDF, cdcDF)
     // finalDF.show()
 
 
-    Then(" hive table should be returned ")
+    Then("Union Dataframe  should be returned ")
     finalDF.collect() should contain theSameElementsAs dfTest.collect()
-
+    finalDF.show()
   }
 
 
-
-  val refDF = Seq(User(4, "MED", "14/11/2019"), User(5, "ZEINEB", "15/11/2019") ).toDF("ID", "PRENOM", "DATE")
+  val refDF = Seq(customers(3, "NIDHAL", "15/11/2019"),
+    customers(4, "MEHDI", "16/11/2019"),
+    customers(5, "ACHREF", "17/11/2019"),
+    customers(6, "MED", "18/11/2019"))
+    .toDF("ID", "PRENOM", "DATE")
 
   it should "delete records from dataframe" in {
     Given("two dataframes ")
     val firstFileDF: DataFrame = Seq(User(1, "JACER", "13/11/2019"),
-      User(2, "AHMED", "14/11/2019"),
-      User(3, "NIDHAL", "15/11/2019"))
+      User(2, "AHMED", "14/11/2019"))
       .toDF("ID", "PRENOM", "DATE")
-    spark.sql("DROP TABLE cdcTest")
-    spark.sql(" CREATE TABLE IF NOT EXISTS cdcTest(  ID INT , PRENOM STRING , DATE STRING)  row format delimited fields terminated by ';'")
-    spark.sql(" INSERT INTO cdcTest  VALUES (1, 'JACER', '13/11/2019')")
-    spark.sql(" INSERT INTO cdcTest  VALUES (4, 'MED', '14/11/2019')")
-    spark.sql(" INSERT INTO cdcTest  VALUES (5, 'ZEINEB', '15/11/2019')")
-    val secondCdcDF = spark.sql("SELECT * FROM cdcTest")
+
+    val secondCdcDF = Seq(customers(1, "JACER", "13/11/2019"),
+      customers(2, "AHMED", "14/11/2019"),
+      customers(3, "NIDHAL", "15/11/2019"),
+      customers(4, "MEHDI", "16/11/2019"),
+      customers(5, "ACHREF", "17/11/2019"),
+      customers(6, "MED", "18/11/2019"))
+      .toDF("ID", "PRENOM", "DATE")
 
     When("deletefunct is invoked")
-    val resultatDFrame = deletefunct(firstFileDF, secondCdcDF)
-
+    val resultatDFrame = delete(firstFileDF, secondCdcDF)
 
 
     Then(" dataframe should be returned ")
@@ -106,36 +109,36 @@ class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen with Share
 
   }
 
-  val refDataFrame = Seq(User(5, "Mehdi", "17/11/2019"), User(4, "Mariem", "15/11/2019") ).toDF("ID", "PRENOM", "DATE")
+  val refDataFrame = Seq(User(1, "MARIEM", "11/11/2019"),
+    User(2, "AMINE", "14/11/2019"),
+    User(3, "MALEK", "16/11/2019"),
+    User(4, "Mariem", "15/11/2019"))
+    .toDF("ID", "PRENOM", "DATE")
+
 
   it should "update records from dataframe" in {
     Given("two dataframes ")
-    val firstFileToDF: DataFrame = Seq(User(1, "JACER", "13/11/2019"),
+    val firstFileToDF: DataFrame = Seq(User(1, "MARIEM", "11/11/2019"),
+      User(2, "AMINE", "14/11/2019"),
+      User(3, "MALEK", "16/11/2019"))
+      .toDF("ID", "PRENOM", "DATE")
+
+    firstFileToDF.show()
+
+    val updatedCdcDF = Seq(User(1, "JACER", "13/11/2019"),
       User(2, "AHMED", "14/11/2019"),
       User(3, "NIDHAL", "15/11/2019"),
-        User (4, "Mariem", "15/11/2019"))
+      User(4, "Mariem", "15/11/2019"))
       .toDF("ID", "PRENOM", "DATE")
-    spark.sql("DROP TABLE cdcTestUpdate")
-    spark.sql(" CREATE TABLE IF NOT EXISTS cdcTestUpdate(  ID INT , PRENOM STRING , DATE STRING)  row format delimited fields terminated by ';'")
-    spark.sql(" INSERT INTO cdcTestUpdate  VALUES (5, 'Mehdi', '17/11/2019')")
-    spark.sql(" INSERT INTO cdcTestUpdate  VALUES (4, 'Med', '14/11/2019')")
 
-    val updatedCdcDF = spark.sql("SELECT * FROM cdcTestUpdate")
-
-    firstFileToDF.show()
     updatedCdcDF.show()
 
-    When("deletefunct is invoked")
-    val resultatUpdatedDFrame = updatefunct(firstFileToDF, updatedCdcDF)
-    resultatUpdatedDFrame.show()
-    firstFileToDF.show()
-    updatedCdcDF.show()
+    When("updatefunct is invoked")
+    val resultatUpdatedDFrame = update(firstFileToDF, updatedCdcDF)
     resultatUpdatedDFrame.show()
 
     Then(" dataframe should be returned ")
     resultatUpdatedDFrame.collect() should contain theSameElementsAs refDataFrame.collect()
 
   }
-  spark.sql(" SELECT * FROM CDC")
-
 }

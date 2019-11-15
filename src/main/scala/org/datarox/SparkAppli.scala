@@ -8,43 +8,44 @@ object SparkAppli {
   def main(args: Array[String]): Unit = {
 
 
-
-   implicit  val spark1 = SparkSession.builder
+    implicit val spark1 = SparkSession.builder
       .appName("SparkSessionExample")
       .master("local[*]")
-     .enableHiveSupport()
+      .enableHiveSupport()
       .getOrCreate
 
-    import spark1.implicits
 
-    if (args.length < 1) {
+    if ( args.length < 1 ) {
       System.err.println("Argument number's is not respected")
       System.exit(1)
     }
 
 
-    //val argFile  = args(0)
-   // val  arrayString = Source.fromFile(argFile).mkString.split("\n")
+    val argFile = args(0)
+    val arrayString = Source.fromFile(argFile).mkString.split("\n")
+    val filePath = arrayString(0).trim
 
-    val filePath ="C:/Users/dell/Desktop/aa/changements.csv"
-    //arrayString(0).trim
-   // spark1.sql("DROP TABLE CDC")
-   val  cdcDF= initiateHiveTable()
-   val fileToDF = readfunct(filePath)
-    val Action =readActionFromFile(filePath).collect.map(x=>x.getString(0))
+    val cdcDF = initiateHiveTable()
+    val wholeFileDF = readDFFromFile(filePath)
 
 
-     Action.map (x => x match {
-    case "I" =>{ Insertfunct(fileToDF)
-      println("Insert")}
-    case "D"=> {deletefunct(fileToDF , cdcDF)
-      println("delete")}
-    case "U" =>{ updatefunct(fileToDF , cdcDF)
-      println("update")}
-  }
-  )
-    cdcDF.show()
-    spark1.sql(" SELECT * FROM CDC").show()
+    val insertActionDF = wholeFileDF.where(wholeFileDF("ACTION") === 'I').drop("ACTION")
+    val updateActionDF = wholeFileDF.where(wholeFileDF("ACTION") === 'U').drop("ACTION")
+    val deleteActionDF = wholeFileDF.where(wholeFileDF("ACTION") === 'D').drop("ACTION")
+
+
+    val dfInsert = insert(insertActionDF, cdcDF)
+    Thread.sleep(100)
+    val dfUpdate = update(updateActionDF, dfInsert)
+    Thread.sleep(100)
+    val dfDelete = delete(deleteActionDF, dfUpdate)
+
+    dfDelete.show()
+
+
+    Thread.sleep(100000)
+
+
   }
 
 }
