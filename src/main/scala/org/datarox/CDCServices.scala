@@ -2,7 +2,7 @@ package org.datarox
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object extendApp {
+object CDCServices {
 
   def initiateHiveTable()(implicit spark1: SparkSession): DataFrame = {
     //spark1.sql("DROP TABLE CDC")

@@ -1,10 +1,10 @@
 package org.datarox
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.datarox.extendApp._
+import org.datarox.CDCServices._
 import scala.io.Source
 
-object SparkAppli {
+object SparkApp {
   def main(args: Array[String]): Unit = {
 
 

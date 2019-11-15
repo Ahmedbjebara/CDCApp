@@ -1,7 +1,7 @@
 package org.datarox
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.datarox.extendApp._
+import org.datarox.CDCServices._
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 import org.datarox.SharedSparkSession
 
@@ -11,7 +11,7 @@ case class Person(Action: String, Id: Int, Prenom: String, Date: String)
 
 case class customers(ID: Int, PRENOM: String, DATE: String)
 
-class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen {
+class CDCServicesSpec extends FlatSpec with Matchers with GivenWhenThen {
 
   implicit val spark: SparkSession = SparkSession
     .builder()
@@ -21,7 +21,7 @@ class extendAppSpec extends FlatSpec with Matchers with GivenWhenThen {
     .getOrCreate()
 
 
-  behavior of "extendAppSpec"
+  behavior of "CDCServicesSpec"
 
   import spark.implicits._
 
