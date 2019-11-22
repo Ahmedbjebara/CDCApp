@@ -1,7 +1,7 @@
 package org.datarox
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.datarox.CDCServices._
+import org.datarox.OperationsOnHiveTable._
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 import org.datarox.SharedSparkSession
 
@@ -11,7 +11,7 @@ case class Person(Action: String, Id: Int, Prenom: String, Date: String)
 
 case class customers(ID: Int, PRENOM: String, DATE: String)
 
-class CDCServicesSpec extends FlatSpec with Matchers with GivenWhenThen {
+class OperationsOnHiveTableSpec extends FlatSpec with Matchers with GivenWhenThen {
 
   implicit val spark: SparkSession = SparkSession
     .builder()
@@ -21,25 +21,9 @@ class CDCServicesSpec extends FlatSpec with Matchers with GivenWhenThen {
     .getOrCreate()
 
 
-  behavior of "CDCServicesSpec"
+  behavior of "OperationsOnHiveTableSpec"
 
   import spark.implicits._
-
-
-  val simpleDF: DataFrame = Seq(Person("I", 1, "JACER", "13/11/2019"),
-    Person("D", 2, "AHMED", "14/11/2019"),
-    Person("U", 3, "NIDHAL", "15/11/2019"))
-    .toDF("ACTION", "ID", "PRENOM", "DATE")
-
-  it should "read records from csv file into dataframe" in {
-    Given("an absolute path of a csv file")
-    val filePath = "C:\\Users\\dell\\Desktop\\aa\\testRead.csv"
-    When("readfunct is invoked")
-    val resultatDF = readDFFromFile(filePath)
-    Then(" dataframe should be returned ")
-    resultatDF.collect() should contain theSameElementsAs simpleDF.collect()
-
-  }
 
 
   val dfTest = Seq(customers(1, "JACER", "13/11/2019"),
@@ -130,11 +114,11 @@ class CDCServicesSpec extends FlatSpec with Matchers with GivenWhenThen {
       User(3, "NIDHAL", "15/11/2019"),
       User(4, "Mariem", "15/11/2019"))
       .toDF("ID", "PRENOM", "DATE")
-
+    val joinKey = "ID"
     updatedCdcDF.show()
 
     When("updatefunct is invoked")
-    val resultatUpdatedDFrame = update(firstFileToDF, updatedCdcDF)
+    val resultatUpdatedDFrame = update(firstFileToDF, updatedCdcDF,joinKey )
     resultatUpdatedDFrame.show()
 
     Then(" dataframe should be returned ")

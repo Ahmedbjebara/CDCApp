@@ -1,7 +1,7 @@
 package org.datarox
 
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import org.datarox.CDCServices._
+import org.datarox.OperationsOnHiveTable._
 import org.datarox.WriteReadDFFromKafkaTopic._
 
 import scala.io.Source
@@ -27,13 +27,20 @@ object SparkApp {
     val argFile = args(0)
     val arrayString = Source.fromFile(argFile).mkString.split("\n")
     val filePath = arrayString(0).trim
+    val joinKey = arrayString(1).trim
 
 
-    val cdcDF = initiateHiveTable()
-    val wholeFileDF = readDFFromFile(filePath)
+
+    val tableDF = initiateHiveTable()
+
+    val wholeFileDF = spark1.read.format("csv")
+      .option("sep", ";")
+      .option("header", "true")
+      .option("inferSchema", "true")
+      .load(filePath)
+
     val df2 = WriteReadDF(wholeFileDF  )
-    println("**********")
-df2.show()
+
 
     val insertActionDF = df2.where(df2("ACTION") === 'I').drop("ACTION")
     insertActionDF.show()
@@ -43,9 +50,9 @@ df2.show()
     deleteActionDF.show()
 
 
-val dfInsert = insert(insertActionDF, cdcDF)
+val dfInsert = insert(insertActionDF, tableDF)
 Thread.sleep(100)
-val dfUpdate = update(updateActionDF, dfInsert)
+val dfUpdate = update(updateActionDF, dfInsert , joinKey)
 Thread.sleep(100)
 val dfDelete = delete(deleteActionDF, dfUpdate)
 
