@@ -2,8 +2,8 @@ package org.datarox
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.datarox.OperationsOnHiveTable._
-import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
-import org.datarox.SharedSparkSession
+import org.scalatest.{FlatSpec,FunSuite, GivenWhenThen, Matchers}
+
 
 case class User(Id: Int, Prenom: String, Date: String)
 
@@ -24,7 +24,7 @@ class OperationsOnHiveTableSpec extends FlatSpec with Matchers with GivenWhenThe
   behavior of "OperationsOnHiveTableSpec"
 
   import spark.implicits._
-
+  val joinKey = "ID"
 
   val dfTest = Seq(customers(1, "JACER", "13/11/2019"),
     customers(2, "AHMED", "14/11/2019"),
@@ -85,7 +85,7 @@ class OperationsOnHiveTableSpec extends FlatSpec with Matchers with GivenWhenThe
       .toDF("ID", "PRENOM", "DATE")
 
     When("deletefunct is invoked")
-    val resultatDFrame = delete(firstFileDF, secondCdcDF)
+    val resultatDFrame = delete(firstFileDF, secondCdcDF,joinKey )
 
 
     Then(" dataframe should be returned ")
@@ -114,7 +114,7 @@ class OperationsOnHiveTableSpec extends FlatSpec with Matchers with GivenWhenThe
       User(3, "NIDHAL", "15/11/2019"),
       User(4, "Mariem", "15/11/2019"))
       .toDF("ID", "PRENOM", "DATE")
-    val joinKey = "ID"
+
     updatedCdcDF.show()
 
     When("updatefunct is invoked")

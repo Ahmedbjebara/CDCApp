@@ -54,7 +54,7 @@ val dfInsert = insert(insertActionDF, tableDF)
 Thread.sleep(100)
 val dfUpdate = update(updateActionDF, dfInsert , joinKey)
 Thread.sleep(100)
-val dfDelete = delete(deleteActionDF, dfUpdate)
+val dfDelete = delete(deleteActionDF, dfUpdate,joinKey )
 
 
 

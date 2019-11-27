@@ -5,7 +5,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 object OperationsOnHiveTable {
 
   def initiateHiveTable()(implicit spark1: SparkSession): DataFrame = {
-  //spark1.sql("DROP TABLE CDC")
+  spark1.sql("DROP TABLE CDC")
     spark1.sql(" CREATE TABLE IF NOT EXISTS CDC(  ID STRING , PRENOM STRING , DATE STRING)  row format delimited fields terminated by ';'")
     spark1.sql("SELECT * FROM CDC")
   }
@@ -17,8 +17,9 @@ object OperationsOnHiveTable {
   }
 
 
-  def delete(fileToDF: DataFrame, tableDF: DataFrame): DataFrame = {
-    tableDF.except(fileToDF)
+  def delete(fileToDF: DataFrame, tableDF: DataFrame,joinKey : String): DataFrame = {
+    val tempDF = tableDF.join(fileToDF, joinKey).select(tableDF("ID"), tableDF("PRENOM"), tableDF("DATE"))
+    tableDF.except(tempDF)
   }
 
 
